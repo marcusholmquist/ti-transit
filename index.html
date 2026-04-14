@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="TI Transit">
+<meta name="theme-color" content="#0a0f1e">
+<title>TI Transit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.14);
+    --text: #f0f4ff;
+    --muted: #6b7ea0;
+    --dim: #3a4a6a;
+    --ferry: #38bdf8;
+    --ferry-dim: rgba(56,189,248,0.12);
+    --bus: #a78bfa;
+    --bus-dim: rgba(167,139,250,0.12);
+    --amber: #fbbf24;
+    --green: #34d399;
+    --red: #f87171;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    overflow-x: hidden;
+  }
+
+  .app {
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    padding: env(safe-area-inset-top, 20px) 0 env(safe-area-inset-bottom, 20px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Header */
+  .header {
+    padding: 24px 20px 0;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .brand {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .day-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 4px 10px;
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+  }
+
+  /* Location strip */
+  .location-strip {
+    margin: 20px 20px 0;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .location-strip:active { border-color: var(--border2); }
+
+  .loc-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    flex-shrink: 0;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 8px var(--green); }
+    50% { opacity: 0.6; box-shadow: 0 0 4px var(--green); }
+  }
+
+  .loc-text {
+    flex: 1;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--text);
+  }
+  .loc-text span { color: var(--muted); }
+
+  .loc-refresh {
+    font-size: 16px;
+    opacity: 0.5;
+  }
+
+  /* Clock */
+  .clock-area {
+    padding: 28px 20px 0;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .clock {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+  }
+
+  /* Next card - hero */
+  .next-hero {
+    margin: 16px 20px 0;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+  }
+  .next-hero.ferry-theme {
+    background: linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(56,189,248,0.02) 100%);
+    border-color: rgba(56,189,248,0.2);
+  }
+  .next-hero.bus-theme {
+    background: linear-gradient(135deg, rgba(167,139,250,0.08) 0%, rgba(167,139,250,0.02) 100%);
+    border-color: rgba(167,139,250,0.2);
+  }
+  .next-hero.none-theme {
+    background: var(--surface);
+  }
+
+  .next-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 10px;
+  }
+
+  .next-mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    font-family: 'DM Mono', monospace;
+    margin-bottom: 10px;
+  }
+  .ferry-badge { background: var(--ferry-dim); color: var(--ferry); }
+  .bus-badge { background: var(--bus-dim); color: var(--bus); }
+
+  .next-time-big {
+    font-size: 52px;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  .ferry-theme .next-time-big { color: var(--ferry); }
+  .bus-theme .next-time-big { color: var(--bus); }
+  .none-theme .next-time-big { color: var(--dim); font-size: 28px; }
+
+  .next-dest {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .countdown-chip {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    text-align: right;
+  }
+  .countdown-mins {
+    font-family: 'DM Mono', monospace;
+    font-size: 28px;
+    font-weight: 500;
+    line-height: 1;
+  }
+  .countdown-mins.urgent { color: var(--red); }
+  .countdown-mins.soon { color: var(--amber); }
+  .countdown-mins.ok { color: var(--green); }
+  .countdown-unit {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* All upcoming */
+  .section-label {
+    margin: 24px 20px 8px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .upcoming-list {
+    margin: 0 20px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--surface);
+  }
+
+  .upcoming-row {
+    display: flex;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+    transition: background 0.15s;
+  }
+  .upcoming-row:last-child { border-bottom: none; }
+  .upcoming-row.is-next {
+    background: var(--surface2);
+  }
+
+  .row-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .row-time {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    width: 58px;
+    flex-shrink: 0;
+  }
+  .ferry-time { color: var(--ferry); }
+  .bus-time { color: var(--bus); }
+
+  .row-dest {
+    flex: 1;
+    font-size: 12px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+  .row-mins {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+  }
+
+  /* Tab bar for location override */
+  .loc-tabs {
+    margin: 20px 20px 0;
+    display: flex;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .loc-tab {
+    flex: 1;
+    padding: 7px 4px;
+    text-align: center;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    border-radius: 7px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.15s;
+    font-family: 'DM Mono', monospace;
+  }
+  .loc-tab.active {
+    background: var(--surface2);
+    color: var(--text);
+    border: 1px solid var(--border2);
+  }
+
+  /* Error/status */
+  .status-msg {
+    margin: 12px 20px 0;
+    padding: 10px 14px;
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.2);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--amber);
+    font-family: 'DM Mono', monospace;
+    display: none;
+  }
+  .status-msg.visible { display: block; }
+
+  .footer {
+    margin-top: auto;
+    padding: 20px 20px 0;
+    font-size: 10px;
+    color: var(--dim);
+    font-family: 'DM Mono', monospace;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+
+  /* Spinner */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid var(--dim);
+    border-top-color: var(--green);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .no-service {
+    padding: 16px;
+    text-align: center;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--dim);
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="brand">TI Transit</div>
+    <div class="day-badge" id="dayBadge">MON</div>
+  </div>
+
+  <div class="location-strip" id="locStrip" onclick="detectLocation()">
+    <div class="loc-dot" id="locDot"></div>
+    <div class="loc-text" id="locText"><span>Tap to detect location</span></div>
+    <div class="loc-refresh" id="locSpinner">⟳</div>
+  </div>
+
+  <div class="status-msg" id="statusMsg"></div>
+
+  <div class="clock-area">
+    <div class="clock" id="clockEl">--:-- --</div>
+  </div>
+
+  <!-- Manual location override tabs -->
+  <div class="loc-tabs">
+    <div class="loc-tab" id="tab-auto" onclick="setTabLocation('auto')">AUTO</div>
+    <div class="loc-tab" id="tab-ti" onclick="setTabLocation('ti')">TREAS. ISL.</div>
+    <div class="loc-tab" id="tab-ferry" onclick="setTabLocation('ferry')">FERRY BLDG</div>
+    <div class="loc-tab" id="tab-transit" onclick="setTabLocation('transit')">TRAN. CTR</div>
+  </div>
+
+  <!-- Next departure hero -->
+  <div class="next-hero none-theme" id="nextHero">
+    <div class="next-label">Next departure</div>
+    <div class="next-time-big" id="nextTime">--:--</div>
+    <div class="next-dest" id="nextDest">detecting location...</div>
+  </div>
+
+  <div class="section-label">Coming up</div>
+
+  <div class="upcoming-list" id="upcomingList">
+    <div class="no-service">Detecting location...</div>
+  </div>
+
+  <div class="footer">Schedule data: SFMTA Route 25 + TI Ferry · Times may vary</div>
+
+</div>
+
+<script>
+// ─── SCHEDULE DATA ────────────────────────────────────────────────────────────
+// All times as minutes from midnight for fast math
+
+function t(str) {
+  // "7:30am" or "7:30 AM" → minutes from midnight
+  const s = str.trim().toLowerCase().replace(/\s/g, '');
+  const ampm = s.includes('am') ? 'am' : 'pm';
+  const clean = s.replace('am','').replace('pm','');
+  const [h, m] = clean.split(':').map(Number);
+  let hrs = h;
+  if (ampm === 'pm' && h !== 12) hrs += 12;
+  if (ampm === 'am' && h === 12) hrs = 0;
+  return hrs * 60 + (m || 0);
+}
+
+function fmt(mins) {
+  // minutes from midnight → "7:30 AM"
+  const h24 = ((mins % 1440) + 1440) % 1440;
+  const h = Math.floor(h24 / 60);
+  const m = h24 % 60;
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+}
+
+// Ferry: TI → Downtown SF (Ferry Building Gate B)
+const FERRY_TI_TO_SF = {
+  weekday: [
+    t('7:30am'), t('8:10am'), t('8:45am'), t('10:20am'),
+    t('11:30am'), t('12:15pm'), t('1:00pm'),
+    t('3:00pm'), t('3:55pm'), t('4:35pm'), t('5:50pm'),
+    t('6:30pm'), t('7:15pm'), t('8:00pm')
+  ],
+  saturday: [
+    t('9:30am'), t('10:15am'), t('11:00am'),
+    t('12:00pm'), t('12:15pm'), t('12:45pm'),
+    t('1:30pm'), t('2:20pm'), t('3:30pm'), t('3:45pm'),
+    t('4:15pm'), t('5:00pm'), t('6:15pm'), t('7:00pm'),
+    t('7:45pm'), t('8:30pm')
+  ],
+  sunday: [
+    t('9:30am'), t('10:15am'), t('11:00am'),
+    t('12:00pm'), t('12:45pm'), t('1:30pm'),
+    t('3:30pm'), t('4:15pm'), t('5:00pm'),
+    t('6:15pm'), t('7:00pm'), t('7:45pm'), t('8:30pm')
+  ]
+};
+
+// Ferry: Downtown SF → TI
+const FERRY_SF_TO_TI = {
+  weekday: [
+    t('7:50am'), t('8:25am'), t('9:05am'), t('10:40am'),
+    t('11:50am'), t('12:35pm'), t('1:20pm'),
+    t('3:20pm'), t('4:15pm'), t('4:55pm'), t('6:10pm'),
+    t('6:50pm'), t('7:35pm'), t('8:20pm')
+  ],
+  saturday: [
+    t('9:50am'), t('10:35am'), t('11:20am'), t('11:45am'),
+    t('12:20pm'), t('12:50pm'), t('1:05pm'),
+    t('1:50pm'), t('2:50pm'), t('3:50pm'), t('4:35pm'),
+    t('5:20pm'), t('6:35pm'), t('7:20pm'),
+    t('8:05pm'), t('8:50pm')
+  ],
+  sunday: [
+    t('9:50am'), t('10:35am'), t('11:20am'),
+    t('12:20pm'), t('12:50pm'), t('1:05pm'),
+    t('1:50pm'), t('3:50pm'), t('4:35pm'),
+    t('5:20pm'), t('6:35pm'), t('7:20pm'),
+    t('8:05pm'), t('8:50pm')
+  ]
+};
+
+// Bus 25: Transit Center Bay 29 → TI (Clipper Cove Way)
+// Weekday: every 20min 6:10am-11:37pm, then overnight (Bay E)
+function buildWeekdayBusOut() {
+  const stops = [];
+  // Regular service from Bay 29
+  let cur = t('6:10am');
+  const intervals = [20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,20,27]; // last at 11:37
+  for(let i=0;i<47;i++) {
+    stops.push(cur);
+    if(i<46) cur += 20;
+  }
+  // 11:37pm = 23*60+37=1417, done. Next: 12:02am=1442
+  stops.push(t('11:37pm'));
+  // Actually let me just list the explicit times from SFMTA
+  return null; // handled below
+}
+
+// Bus 25 Outbound (SF → TI) departure times from Transit Center
+const BUS_SF_TO_TI = {
+  weekday: (() => {
+    const times = [];
+    // From Bay 29: 6:10am to 12:02am every 20min (with some variations)
+    const raw = [
+      '6:10am','6:30am','6:50am','7:10am','7:30am','7:50am',
+      '8:10am','8:30am','8:50am','9:10am','9:30am','9:50am',
+      '10:10am','10:30am','10:50am','11:10am','11:30am','11:50am',
+      '12:10pm','12:30pm','12:50pm','1:10pm','1:30pm','1:50pm',
+      '2:10pm','2:30pm','2:50pm','3:10pm','3:30pm','3:50pm',
+      '4:10pm','4:30pm','4:50pm','5:10pm','5:30pm','5:50pm',
+      '6:10pm','6:30pm','6:50pm','7:10pm','7:30pm','7:50pm',
+      '8:10pm','8:30pm','8:50pm','9:10pm','9:30pm','9:50pm',
+      '10:10pm','10:30pm','10:50pm','11:10pm','11:37pm','12:02am'
+    ];
+    // Overnight from Bay E (after midnight)
+    const rawE = ['12:32am','1:02am','1:32am','2:02am','2:32am','3:02am','3:32am','4:02am','4:32am','5:02am','5:32am','6:02am'];
+    return [...raw.map(t), ...rawE.map(t)];
+  })(),
+  saturday: (() => {
+    const raw = [
+      '6:25am','6:55am','7:20am','7:45am','8:10am','8:35am',
+      '9:00am','9:25am','9:50am','10:15am','10:40am','11:05am',
+      '11:30am','11:55am','12:20pm','12:45pm','1:10pm','1:35pm',
+      '2:00pm','2:25pm','2:50pm','3:15pm','3:40pm','4:05pm',
+      '4:30pm','4:55pm','5:20pm','5:45pm','6:10pm','6:35pm',
+      '7:00pm','7:25pm','7:50pm','8:15pm','8:40pm','9:05pm',
+      '9:30pm','9:55pm','10:20pm','10:45pm','11:10pm','11:37pm','12:02am'
+    ];
+    const rawE = ['12:32am','1:02am','1:32am','2:02am','2:32am','3:02am','3:32am','4:02am','4:32am','5:02am','5:32am','6:02am'];
+    return [...raw.map(t), ...rawE.map(t)];
+  })(),
+  sunday: (() => {
+    const raw = [
+      '6:25am','6:55am','7:20am','7:45am','8:10am','8:35am',
+      '9:00am','9:25am','9:50am','10:15am','10:40am','11:05am',
+      '11:30am','11:55am','12:20pm','12:45pm','1:10pm','1:35pm',
+      '2:00pm','2:25pm','2:50pm','3:15pm','3:40pm','4:05pm',
+      '4:30pm','4:55pm','5:20pm','5:45pm','6:10pm','6:35pm',
+      '7:00pm','7:25pm','7:50pm','8:15pm','8:40pm','9:05pm',
+      '9:30pm','9:55pm','10:20pm','10:45pm','11:10pm','11:37pm','12:02am'
+    ];
+    const rawE = ['12:32am','1:02am','1:32am','2:02am','2:32am','3:02am','3:32am','4:02am','4:32am','5:02am','5:32am','6:02am'];
+    return [...raw.map(t), ...rawE.map(t)];
+  })()
+};
+
+// Bus 25 Inbound (TI → SF Transit Center) departure times from Clipper Cove Way
+const BUS_TI_TO_SF = {
+  weekday: (() => {
+    const raw = [
+      '6:19am','6:39am','6:59am','7:19am','7:39am','7:59am',
+      '8:19am','8:39am','8:59am','9:19am','9:39am','9:59am',
+      '10:19am','10:39am','10:59am','11:19am','11:39am','11:59am',
+      '12:20pm','12:40pm','1:00pm','1:20pm','1:40pm','2:00pm',
+      '2:20pm','2:40pm','3:00pm','3:20pm','3:40pm','4:00pm',
+      '4:20pm','4:40pm','5:00pm','5:20pm','5:40pm','6:00pm',
+      '6:20pm','6:40pm','7:00pm','7:19pm','7:39pm','7:59pm',
+      '8:19pm','8:39pm','8:59pm','9:19pm','9:39pm','9:59pm',
+      '10:19pm','10:39pm','10:59pm','11:19pm','11:46pm','12:11am'
+    ];
+    const rawE = ['12:41am','1:11am','1:41am','2:11am','2:41am','3:11am','3:41am','4:11am','4:41am','5:11am','5:41am','6:11am'];
+    return [...raw.map(t), ...rawE.map(t)];
+  })(),
+  saturday: (() => {
+    const raw = [
+      '6:34am','7:04am','7:29am','7:54am','8:19am','8:44am',
+      '9:09am','9:34am','9:59am','10:24am','10:49am','11:14am',
+      '11:39am','12:04pm','12:29pm','12:54pm','1:19pm','1:44pm',
+      '2:09pm','2:34pm','2:59pm','3:24pm','3:49pm','4:15pm',
+      '4:40pm','5:05pm','5:30pm','5:55pm','6:20pm','6:45pm',
+      '7:10pm','7:35pm','8:00pm','8:25pm','8:50pm','9:15pm',
+      '9:40pm','10:05pm','10:30pm','10:55pm','11:20pm','11:47pm','12:12am'
+    ];
+    const rawE = ['12:42am','1:12am','1:42am','2:12am','2:42am','3:12am','3:42am','4:12am','4:42am','5:12am','5:42am','6:12am'];
+    return [...raw.map(t), ...rawE.map(t)];
+  })(),
+  sunday: (() => {
+    const raw = [
+      '6:34am','7:04am','7:29am','7:54am','8:19am','8:44am',
+      '9:09am','9:34am','9:59am','10:24am','10:49am','11:14am',
+      '11:39am','12:04pm','12:29pm','12:54pm','1:19pm','1:44pm',
+      '2:09pm','2:34pm','2:59pm','3:24pm','3:49pm','4:15pm',
+      '4:40pm','5:05pm','5:30pm','5:55pm','6:20pm','6:45pm',
+      '7:10pm','7:35pm','8:00pm','8:25pm','8:50pm','9:15pm',
+      '9:40pm','10:05pm','10:30pm','10:55pm','11:20pm','11:47pm','12:12am'
+    ];
+    const rawE = ['12:42am','1:12am','1:42am','2:12am','2:42am','3:12am','3:42am','4:12am','4:42am','5:12am','5:42am','6:12am'];
+    return [...raw.map(t), ...rawE.map(t)];
+  })()
+};
+
+// ─── LOCATIONS ───────────────────────────────────────────────────────────────
+const LOCATIONS = {
+  ti: { lat: 37.8233, lon: -122.3708, name: 'Treasure Island' },
+  ferry: { lat: 37.7955, lon: -122.3937, name: 'Ferry Building' },
+  transit: { lat: 37.7897, lon: -122.3972, name: 'Transbay Transit Ctr' }
+};
+
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 6371000;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLon = (lon2-lon1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function getNearestLocation(lat, lon) {
+  let best = null, bestDist = Infinity;
+  for (const [key, loc] of Object.entries(LOCATIONS)) {
+    const d = haversine(lat, lon, loc.lat, loc.lon);
+    if (d < bestDist) { bestDist = d; best = key; }
+  }
+  return { key: best, dist: bestDist };
+}
+
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let currentLocation = null; // 'ti' | 'ferry' | 'transit'
+let tabOverride = 'auto';
+let userLat = null, userLon = null;
+
+// ─── SCHEDULE LOGIC ───────────────────────────────────────────────────────────
+function getDayType() {
+  const d = new Date().getDay(); // 0=sun, 6=sat
+  if (d === 0) return 'sunday';
+  if (d === 6) return 'saturday';
+  return 'weekday';
+}
+
+function nowMins() {
+  const n = new Date();
+  return n.getHours() * 60 + n.getMinutes();
+}
+
+// Returns array of {time(mins), mode, dest} sorted by time, upcoming only
+function getUpcomingDepartures(locKey, limit = 8) {
+  const day = getDayType();
+  const now = nowMins();
+  const deps = [];
+
+  if (locKey === 'ti') {
+    // Ferry TI → SF
+    for (const m of FERRY_TI_TO_SF[day]) {
+      deps.push({ time: m, mode: 'ferry', dest: 'Ferry Building' });
+    }
+    // Bus TI → Transit Center
+    for (const m of BUS_TI_TO_SF[day]) {
+      deps.push({ time: m, mode: 'bus', dest: 'Transbay Transit Ctr' });
+    }
+  } else if (locKey === 'ferry') {
+    // Ferry SF → TI
+    for (const m of FERRY_SF_TO_TI[day]) {
+      deps.push({ time: m, mode: 'ferry', dest: 'Treasure Island' });
+    }
+  } else if (locKey === 'transit') {
+    // Bus Transit Center → TI
+    for (const m of BUS_SF_TO_TI[day]) {
+      deps.push({ time: m, mode: 'bus', dest: 'Treasure Island' });
+    }
+  }
+
+  // Sort, handle after-midnight times (>1440 wrap)
+  deps.sort((a, b) => a.time - b.time);
+
+  // Filter: upcoming (within next 4 hours, or just future)
+  // Handle overnight: if time < 360 (6am), treat as next-day by adding 1440 if now > 18*60
+  const upcoming = deps.map(d => {
+    let adjTime = d.time;
+    if (d.time < 360 && now > 18 * 60) adjTime = d.time + 1440;
+    return { ...d, adjTime };
+  }).filter(d => d.adjTime >= now).sort((a,b) => a.adjTime - b.adjTime);
+
+  return upcoming.slice(0, limit);
+}
+
+// ─── UI UPDATE ────────────────────────────────────────────────────────────────
+function updateUI() {
+  const loc = currentLocation;
+  const now = nowMins();
+  const upcoming = loc ? getUpcomingDepartures(loc) : [];
+  const next = upcoming[0];
+
+  // Hero card
+  const hero = document.getElementById('nextHero');
+  const nextTimeEl = document.getElementById('nextTime');
+  const nextDestEl = document.getElementById('nextDest');
+
+  if (!loc) {
+    hero.className = 'next-hero none-theme';
+    nextTimeEl.textContent = '--:--';
+    nextDestEl.textContent = 'tap the location strip above';
+    document.getElementById('countdownArea')?.remove();
+    return;
+  }
+
+  if (!next) {
+    hero.className = 'next-hero none-theme';
+    nextTimeEl.style.fontSize = '22px';
+    nextTimeEl.textContent = 'No more service';
+    nextDestEl.textContent = 'Check tomorrow\'s schedule';
+  } else {
+    const minsAway = next.adjTime - now;
+    const isFerry = next.mode === 'ferry';
+
+    hero.className = `next-hero ${isFerry ? 'ferry' : 'bus'}-theme`;
+
+    // Mode badge
+    let badge = hero.querySelector('.next-mode-badge');
+    if (!badge) {
+      badge = document.createElement('div');
+      badge.className = 'next-mode-badge';
+      hero.insertBefore(badge, hero.querySelector('.next-time-big'));
+    }
+    badge.className = `next-mode-badge ${isFerry ? 'ferry' : 'bus'}-badge`;
+    badge.textContent = isFerry ? '⛴ Ferry' : '🚌 Bus 25';
+
+    nextTimeEl.style.fontSize = '52px';
+    nextTimeEl.textContent = fmt(next.adjTime);
+    nextDestEl.textContent = `→ ${next.dest}`;
+
+    // Countdown
+    let cc = hero.querySelector('.countdown-chip');
+    if (!cc) {
+      cc = document.createElement('div');
+      cc.className = 'countdown-chip';
+      cc.innerHTML = `<div class="countdown-mins" id="ccMins"></div><div class="countdown-unit">min away</div>`;
+      hero.appendChild(cc);
+    }
+    const ccMins = cc.querySelector('.countdown-mins');
+    ccMins.textContent = minsAway;
+    ccMins.className = `countdown-mins ${minsAway <= 5 ? 'urgent' : minsAway <= 15 ? 'soon' : 'ok'}`;
+  }
+
+  // Upcoming list
+  const list = document.getElementById('upcomingList');
+  if (upcoming.length === 0) {
+    list.innerHTML = '<div class="no-service">No more departures today</div>';
+    return;
+  }
+
+  list.innerHTML = upcoming.map((dep, i) => {
+    const minsAway = dep.adjTime - now;
+    const isFerry = dep.mode === 'ferry';
+    return `<div class="upcoming-row ${i === 0 ? 'is-next' : ''}">
+      <div class="row-icon">${isFerry ? '⛴' : '🚌'}</div>
+      <div class="row-time ${isFerry ? 'ferry-time' : 'bus-time'}">${fmt(dep.adjTime)}</div>
+      <div class="row-dest">→ ${dep.dest}</div>
+      <div class="row-mins">${minsAway}m</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── LOCATION DETECTION ───────────────────────────────────────────────────────
+function detectLocation() {
+  const txt = document.getElementById('locText');
+  const spinner = document.getElementById('locSpinner');
+  txt.innerHTML = '<span><span class="spinner"></span> Detecting...</span>';
+  spinner.textContent = '';
+
+  if (!navigator.geolocation) {
+    showStatus('Geolocation not supported. Use manual tabs above.');
+    txt.innerHTML = '<span>Location unavailable</span>';
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(pos => {
+    userLat = pos.coords.latitude;
+    userLon = pos.coords.longitude;
+    const { key, dist } = getNearestLocation(userLat, userLon);
+    currentLocation = key;
+
+    const distM = Math.round(dist);
+    const locNames = { ti: 'Treasure Island', ferry: 'Ferry Building', transit: 'Transbay Transit Ctr' };
+    txt.innerHTML = `${locNames[key]} <span>· ${distM < 1000 ? distM+'m away' : (dist/1000).toFixed(1)+'km'}</span>`;
+    spinner.textContent = '⟳';
+
+    if (dist > 2000) {
+      showStatus(`Nearest stop is ${Math.round(dist/1000*10)/10}km away — override with tabs if needed`);
+    } else {
+      hideStatus();
+    }
+
+    // Set active tab
+    setActiveTab('auto');
+    updateUI();
+  }, err => {
+    txt.innerHTML = '<span>Location denied — use tabs below</span>';
+    spinner.textContent = '⟳';
+    showStatus('Location access denied. Select your location manually using the tabs.');
+  }, { enableHighAccuracy: true, timeout: 10000 });
+}
+
+function setTabLocation(tab) {
+  tabOverride = tab;
+  setActiveTab(tab);
+  if (tab === 'auto') {
+    if (userLat !== null) {
+      const { key } = getNearestLocation(userLat, userLon);
+      currentLocation = key;
+    } else {
+      detectLocation();
+      return;
+    }
+  } else {
+    currentLocation = tab;
+    const locNames = { ti: 'Treasure Island', ferry: 'Ferry Building', transit: 'Transbay Transit Ctr' };
+    document.getElementById('locText').innerHTML = `${locNames[tab]} <span>· manual</span>`;
+    hideStatus();
+  }
+  updateUI();
+}
+
+function setActiveTab(tab) {
+  ['auto','ti','ferry','transit'].forEach(id => {
+    document.getElementById('tab-'+id)?.classList.toggle('active', id === tab);
+  });
+}
+
+function showStatus(msg) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+function hideStatus() {
+  document.getElementById('statusMsg').classList.remove('visible');
+}
+
+// ─── CLOCK ────────────────────────────────────────────────────────────────────
+function updateClock() {
+  const n = new Date();
+  const h = n.getHours(), m = n.getMinutes(), s = n.getSeconds();
+  const ampm = h < 12 ? 'AM' : 'PM';
+  const h12 = h === 0 ? 12 : h > 12 ? h - 12 : h;
+  document.getElementById('clockEl').textContent =
+    `${h12}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm}`;
+
+  // Day badge
+  const days = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
+  document.getElementById('dayBadge').textContent = days[n.getDay()];
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+updateClock();
+setInterval(() => {
+  updateClock();
+  updateUI(); // refresh countdown every second
+}, 1000);
+
+// Auto-detect on load
+window.addEventListener('load', () => {
+  detectLocation();
+});
+</script>
+</body>
+</html>

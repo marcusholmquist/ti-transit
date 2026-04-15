@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TI Transit">
+<meta name="theme-color" content="#f5f4f0" id="themeColorMeta">
+<title>TI Transit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Space+Grotesk:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f4f0;
+  --surface: #ffffff;
+  --surface2: #efefea;
+  --border: rgba(0,0,0,0.07);
+  --border2: rgba(0,0,0,0.13);
+  --text: #111111;
+  --muted: #7a7a72;
+  --dim: #c0bfb8;
+  --ferry: #0077b6;
+  --ferry-bg: #e8f4fb;
+  --ferry-border: rgba(0,119,182,0.2);
+  --bus: #6d28d9;
+  --bus-bg: #f0ebff;
+  --bus-border: rgba(109,40,217,0.2);
+  --green: #047857;
+  --green-bg: #d1fae5;
+  --green-border: rgba(4,120,87,0.2);
+  --amber: #b45309;
+  --amber-bg: #fef3c7;
+  --red: #be123c;
+  --red-bg: #ffe4e6;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.07);
+}
+[data-theme="dark"] {
+  --bg: #0a0f1e;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.14);
+  --text: #f0f4ff;
+  --muted: #6b7ea0;
+  --dim: #3a4a6a;
+  --ferry: #38bdf8;
+  --ferry-bg: rgba(56,189,248,0.08);
+  --ferry-border: rgba(56,189,248,0.2);
+  --bus: #a78bfa;
+  --bus-bg: rgba(167,139,250,0.08);
+  --bus-border: rgba(167,139,250,0.2);
+  --green: #34d399;
+  --green-bg: rgba(52,211,153,0.1);
+  --green-border: rgba(52,211,153,0.2);
+  --amber: #fbbf24;
+  --amber-bg: rgba(251,191,36,0.1);
+  --red: #f87171;
+  --red-bg: rgba(248,113,113,0.1);
+  --shadow-sm: none;
+  --shadow-md: none;
+}
+[data-font="syne"]       { --font-ui:'Syne',sans-serif;           --font-mono:'DM Mono',monospace; }
+[data-font="inter"]      { --font-ui:'Inter',sans-serif;          --font-mono:'Inter',sans-serif; }
+[data-font="playfair"]   { --font-ui:'Playfair Display',serif;    --font-mono:'DM Mono',monospace; }
+[data-font="space"]      { --font-ui:'Space Grotesk',sans-serif;  --font-mono:'Space Grotesk',sans-serif; }
+[data-font="instrument"] { --font-ui:'Instrument Serif',serif;    --font-mono:'DM Mono',monospace; }
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { height:100%; background:var(--bg); color:var(--text); font-family:var(--font-ui,'Syne',sans-serif); overflow-x:hidden; transition:background 0.25s,color 0.25s; }
+.app { min-height:100vh; max-width:430px; margin:0 auto; padding:env(safe-area-inset-top,20px) 0 calc(env(safe-area-inset-bottom,20px)+28px); display:flex; flex-direction:column; }
+
+/* HEADER */
+.header { padding:22px 20px 0; display:flex; align-items:center; justify-content:space-between; }
+.brand { font-size:18px; font-weight:800; letter-spacing:-0.02em; }
+.brand span { color:var(--ferry); }
+.header-right { display:flex; align-items:center; gap:8px; }
+.day-badge { font-family:var(--font-mono); font-size:10px; padding:5px 10px; border:1px solid var(--border2); border-radius:20px; color:var(--muted); letter-spacing:0.12em; background:var(--surface); }
+.settings-btn { width:32px; height:32px; border:1px solid var(--border2); border-radius:50%; background:var(--surface); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:15px; box-shadow:var(--shadow-sm); flex-shrink:0; }
+.settings-btn:active { opacity:0.7; }
+
+/* CLOCK */
+.clock-row { padding:5px 20px 0; }
+.clock { font-family:var(--font-mono); font-size:12px; color:var(--muted); }
+
+/* QUOTE */
+.quote-strip {
+  margin:12px 20px 0;
+  padding:11px 14px;
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:var(--shadow-sm);
+}
+.quote-text {
+  font-size:12px;
+  font-style:italic;
+  color:var(--muted);
+  line-height:1.5;
+  font-family:var(--font-ui);
+}
+.quote-attr {
+  font-size:10px;
+  color:var(--dim);
+  font-family:var(--font-mono);
+  margin-top:4px;
+  letter-spacing:0.04em;
+}
+
+/* LOCATION STRIP */
+.location-strip { margin:10px 20px 0; padding:12px 16px; background:var(--surface); border:1px solid var(--border); border-radius:14px; display:flex; align-items:center; gap:10px; cursor:pointer; box-shadow:var(--shadow-sm); }
+.location-strip:active { opacity:0.8; }
+.loc-dot { width:8px; height:8px; border-radius:50%; background:var(--green); flex-shrink:0; animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{box-shadow:0 0 0 3px rgba(4,120,87,0.15);}50%{box-shadow:0 0 0 6px rgba(4,120,87,0.05);} }
+[data-theme="dark"] .loc-dot { animation:pulseDk 2s infinite; }
+@keyframes pulseDk { 0%,100%{box-shadow:0 0 0 3px rgba(52,211,153,0.2);}50%{box-shadow:0 0 0 6px rgba(52,211,153,0.06);} }
+.loc-text { flex:1; font-family:var(--font-mono); font-size:12px; font-weight:500; }
+.loc-text span { color:var(--muted); font-weight:400; }
+.loc-refresh { font-size:16px; color:var(--dim); }
+
+/* STATUS */
+.status-msg { margin:8px 20px 0; padding:10px 14px; background:var(--amber-bg); border:1px solid rgba(180,83,9,0.15); border-radius:10px; font-size:12px; color:var(--amber); font-family:var(--font-mono); line-height:1.5; display:none; }
+.status-msg.visible { display:block; }
+
+/* SETTINGS PANEL */
+.settings-panel { margin:10px 20px 0; background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow:hidden; box-shadow:var(--shadow-md); display:none; }
+.settings-panel.open { display:block; }
+.settings-section { padding:14px 16px; border-bottom:1px solid var(--border); }
+.settings-section:last-child { border-bottom:none; }
+.settings-label { font-size:10px; font-weight:600; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); font-family:var(--font-mono); margin-bottom:10px; }
+.theme-toggle { display:flex; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:3px; gap:2px; }
+.theme-btn { flex:1; padding:8px; text-align:center; font-size:12px; border-radius:7px; cursor:pointer; color:var(--muted); transition:all 0.15s; font-family:var(--font-mono); }
+.theme-btn.active { background:var(--bg); color:var(--text); border:1px solid var(--border2); font-weight:600; }
+.font-options { display:flex; flex-direction:column; gap:4px; }
+.font-option { padding:10px 12px; border:1px solid var(--border); border-radius:10px; cursor:pointer; display:flex; align-items:center; justify-content:space-between; }
+.font-option.active { border-color:var(--ferry); background:var(--ferry-bg); }
+.font-option-name { font-size:14px; font-weight:600; color:var(--text); }
+.font-option.active .font-option-name { color:var(--ferry); }
+.font-option-sample { font-size:12px; color:var(--muted); font-family:var(--font-mono); }
+.font-check { font-size:14px; opacity:0; margin-left:8px; }
+.font-option.active .font-check { opacity:1; }
+.font-option[data-font="syne"] .font-option-name       { font-family:'Syne',sans-serif; }
+.font-option[data-font="inter"] .font-option-name      { font-family:'Inter',sans-serif; }
+.font-option[data-font="playfair"] .font-option-name   { font-family:'Playfair Display',serif; }
+.font-option[data-font="space"] .font-option-name      { font-family:'Space Grotesk',sans-serif; }
+.font-option[data-font="instrument"] .font-option-name { font-family:'Instrument Serif',serif; }
+
+/* MAIN TABS */
+.main-tabs { margin:12px 20px 0; display:flex; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:3px; gap:2px; box-shadow:var(--shadow-sm); }
+.main-tab { flex:1; padding:9px 6px; text-align:center; font-size:11px; font-weight:700; letter-spacing:0.06em; border-radius:9px; cursor:pointer; color:var(--muted); transition:all 0.15s; font-family:var(--font-mono); }
+.main-tab.tab-smart.active  { background:var(--green-bg);  color:var(--green);  border:1px solid var(--green-border); }
+.main-tab.tab-inbound.active  { background:var(--ferry-bg);  color:var(--ferry);  border:1px solid var(--ferry-border); }
+.main-tab.tab-outbound.active { background:var(--bus-bg);    color:var(--bus);    border:1px solid var(--bus-border); }
+
+/* SECTION LABEL */
+.section-label { margin:14px 20px 8px; font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--dim); font-family:var(--font-mono); }
+
+/* DEPARTURE CARD */
+.dep-card { margin:0 20px 12px; border-radius:16px; border:1px solid var(--border); overflow:hidden; background:var(--surface); box-shadow:var(--shadow-md); }
+.dep-card.ferry-card { border-color:var(--ferry-border); background:var(--ferry-bg); }
+.dep-card.bus-card   { border-color:var(--bus-border);   background:var(--bus-bg); }
+
+.dep-card-header { padding:16px 16px 0; }
+.dep-mode-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.dep-mode-badge { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600; font-family:var(--font-mono); }
+.ferry-badge { background:rgba(0,119,182,0.1); color:var(--ferry); }
+.bus-badge   { background:rgba(109,40,217,0.1); color:var(--bus); }
+[data-theme="dark"] .ferry-badge { background:rgba(56,189,248,0.12); }
+[data-theme="dark"] .bus-badge   { background:rgba(167,139,250,0.12); }
+
+.dep-time-big { font-size:46px; font-weight:800; letter-spacing:-0.03em; line-height:1; }
+.ferry-card .dep-time-big { color:var(--ferry); }
+.bus-card   .dep-time-big { color:var(--bus); }
+.dep-dest { font-size:13px; color:var(--muted); font-family:var(--font-mono); margin-top:3px; margin-bottom:14px; }
+
+/* TRAVEL ROW inside card */
+.dep-travel-row {
+  display:flex; align-items:flex-start;
+  gap:16px; padding:12px 16px;
+  border-top:1px solid var(--border);
+}
+.dep-travel-col { flex:1; display:flex; flex-direction:column; align-items:center; text-align:center; gap:1px; }
+.dep-travel-col:not(:last-child) { border-right:1px solid var(--border); }
+
+.dep-travel-icon { font-size:15px; line-height:1; margin-bottom:3px; }
+.dep-travel-mins {
+  font-family:var(--font-mono);
+  font-size:15px; font-weight:500;
+  color:var(--text);
+  line-height:1;
+}
+.dep-travel-dist {
+  font-family:var(--font-mono);
+  font-size:10px; color:var(--dim);
+  margin-top:1px;
+}
+.dep-travel-status {
+  font-size:10px;
+  font-style:italic;
+  margin-top:3px;
+  line-height:1.3;
+  color:var(--muted);
+}
+
+/* UPCOMING LIST */
+.upcoming-list { margin:0 20px; border:1px solid var(--border); border-radius:14px; overflow:hidden; background:var(--surface); box-shadow:var(--shadow-sm); }
+.upcoming-row { display:flex; align-items:center; padding:11px 14px; border-bottom:1px solid var(--border); gap:10px; }
+.upcoming-row:last-child { border-bottom:none; }
+.upcoming-row.is-next { background:var(--surface2); }
+.row-icon { font-size:13px; width:18px; text-align:center; flex-shrink:0; }
+.row-time { font-family:var(--font-mono); font-size:13px; font-weight:500; width:58px; flex-shrink:0; }
+.ferry-time { color:var(--ferry); }
+.bus-time   { color:var(--bus); }
+.row-middle { flex:1; min-width:0; }
+.row-dest  { font-size:11px; color:var(--muted); font-family:var(--font-mono); }
+.row-catch { font-size:10px; color:var(--dim); font-family:var(--font-mono); font-style:italic; margin-top:1px; }
+.row-mins-chip { font-family:var(--font-mono); font-size:11px; padding:3px 7px; border-radius:20px; background:var(--surface2); color:var(--muted); flex-shrink:0; }
+.upcoming-row.is-next .row-mins-chip { background:var(--green-bg); color:var(--green); }
+
+/* SMART CARD */
+.smart-card { margin:0 20px 12px; padding:0; border-radius:16px; background:var(--surface); border:1px solid var(--border); box-shadow:var(--shadow-md); overflow:hidden; }
+.smart-card-label { padding:14px 16px 10px; font-size:10px; font-weight:600; letter-spacing:0.16em; text-transform:uppercase; color:var(--dim); font-family:var(--font-mono); border-bottom:1px solid var(--border); }
+.smart-row { display:flex; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border); gap:12px; }
+.smart-row:last-child { border-bottom:none; }
+.smart-time { font-family:var(--font-mono); font-size:20px; font-weight:700; width:80px; flex-shrink:0; }
+.smart-info { flex:1; min-width:0; }
+.smart-dest  { font-size:12px; color:var(--muted); font-family:var(--font-mono); }
+.smart-catch { font-size:10px; color:var(--dim); font-family:var(--font-mono); font-style:italic; margin-top:2px; }
+.smart-mins { font-family:var(--font-mono); font-size:13px; font-weight:600; flex-shrink:0; color:var(--green); }
+.smart-mins.soon   { color:var(--amber); }
+.smart-mins.urgent { color:var(--red); }
+
+.no-data { padding:24px; text-align:center; font-family:var(--font-mono); font-size:12px; color:var(--dim); }
+.footer { margin-top:auto; padding:20px 20px 0; font-size:10px; color:var(--dim); font-family:var(--font-mono); text-align:center; letter-spacing:0.04em; line-height:1.6; }
+.spinner { display:inline-block; width:12px; height:12px; border:2px solid var(--dim); border-top-color:var(--green); border-radius:50%; animation:spin 0.8s linear infinite; vertical-align:middle; }
+@keyframes spin { to{transform:rotate(360deg);} }
+</style>
+</head>
+<body data-theme="light" data-font="syne">
+<div class="app">
+
+  <div class="header">
+    <div class="brand">TI <span>Transit</span></div>
+    <div class="header-right">
+      <div class="day-badge" id="dayBadge">MON</div>
+      <div class="settings-btn" id="settingsBtn" onclick="toggleSettings()">⚙</div>
+    </div>
+  </div>
+
+  <div class="clock-row"><div class="clock" id="clockEl">--:-- --</div></div>
+
+  <!-- Daily quote -->
+  <div class="quote-strip">
+    <div class="quote-text" id="quoteText"></div>
+    <div class="quote-attr" id="quoteAttr"></div>
+  </div>
+
+  <!-- Location -->
+  <div class="location-strip" onclick="detectLocation()">
+    <div class="loc-dot"></div>
+    <div class="loc-text" id="locText"><span>Tap to detect location</span></div>
+    <div class="loc-refresh">⟳</div>
+  </div>
+
+  <div class="status-msg" id="statusMsg"></div>
+
+  <!-- Settings panel -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-section">
+      <div class="settings-label">Appearance</div>
+      <div class="theme-toggle">
+        <div class="theme-btn active" id="themeLight" onclick="setTheme('light')">☀ Light</div>
+        <div class="theme-btn" id="themeDark" onclick="setTheme('dark')">☾ Dark</div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="settings-label">Font</div>
+      <div class="font-options">
+        <div class="font-option active" data-font="syne"       onclick="setFont('syne')">      <span class="font-option-name">Syne</span>             <div style="display:flex;align-items:center"><span class="font-option-sample">geometric</span> <span class="font-check">✓</span></div></div>
+        <div class="font-option"        data-font="inter"      onclick="setFont('inter')">     <span class="font-option-name">Inter</span>            <div style="display:flex;align-items:center"><span class="font-option-sample">clean</span>     <span class="font-check">✓</span></div></div>
+        <div class="font-option"        data-font="space"      onclick="setFont('space')">     <span class="font-option-name">Space Grotesk</span>   <div style="display:flex;align-items:center"><span class="font-option-sample">techy</span>     <span class="font-check">✓</span></div></div>
+        <div class="font-option"        data-font="playfair"   onclick="setFont('playfair')">  <span class="font-option-name">Playfair Display</span><div style="display:flex;align-items:center"><span class="font-option-sample">editorial</span><span class="font-check">✓</span></div></div>
+        <div class="font-option"        data-font="instrument" onclick="setFont('instrument')"><span class="font-option-name">Instrument Serif</span><div style="display:flex;align-items:center"><span class="font-option-sample">refined</span>  <span class="font-check">✓</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main tabs -->
+  <div class="main-tabs">
+    <div class="main-tab tab-smart active" id="tab-smart"    onclick="setTab('smart')">⚡ Smart</div>
+    <div class="main-tab tab-inbound"      id="tab-inbound"  onclick="setTab('inbound')">→ SF</div>
+    <div class="main-tab tab-outbound"     id="tab-outbound" onclick="setTab('outbound')">→ Home</div>
+  </div>
+
+  <div id="mainContent"></div>
+
+  <div class="footer">SFMTA Route 25 · TI Ferry · Times may vary<br>Tap location strip to refresh GPS</div>
+</div>
+
+<script>
+// ── QUOTES ────────────────────────────────────────────────────
+const QUOTES = [
+  { text: "You miss 100% of the ferries you don't run for.", attr: "— Wayne Gretzky (probably)" },
+  { text: "The best time to leave was 5 minutes ago. The second best time is now.", attr: "— Ancient commuter proverb" },
+  { text: "Move fast and catch things.", attr: "— revised Silicon Valley wisdom" },
+  { text: "Ships don't wait. Neither should your ambitions.", attr: "— anonymous dock worker" },
+  { text: "Fortune favors the person who already has their shoes on.", attr: "— Marcus Aurelius, roughly" },
+  { text: "Every missed ferry is just a longer happy hour.", attr: "— optimist unknown" },
+  { text: "The ferry doesn't care about your feelings. Respect it.", attr: "— TI resident, 2024" },
+  { text: "If it scares you, it might be a good thing to run toward.", attr: "— Seth Godin" },
+  { text: "You are always one decision away from a completely different commute.", attr: "— somebody wise" },
+  { text: "Be the person who leaves early enough to walk.", attr: "— no one, until now" },
+  { text: "Regret the things you didn't do. Like leaving 3 minutes earlier.", attr: "— general life advice" },
+  { text: "Comfort zones don't have ferry schedules.", attr: "— TI Transit, probably" },
+  { text: "Life is short. Sprint for the 7:30.", attr: "— a reasonable person" },
+  { text: "The water doesn't lie. The clock doesn't either.", attr: "— anonymous" },
+  { text: "Do it scared. Do it tired. Do it before the gangway lifts.", attr: "— unknown" },
+  { text: "Not all who wander are lost. But check the schedule first.", attr: "— Tolkien, updated" },
+  { text: "Discipline is just remembering what you actually want.", attr: "— David Campbell" },
+  { text: "The ferry waits for no man. Become someone who doesn't need it to.", attr: "— TI wisdom" },
+  { text: "Somewhere between 'I'll leave in a minute' and 'I missed it' is a decision.", attr: "— anon" },
+  { text: "A smooth sea never made a skilled commuter.", attr: "— Franklin, adapted" },
+  { text: "Good things come to those who leave on time.", attr: "— revised proverb" },
+  { text: "It's supposed to be hard. If it were easy, you'd live closer.", attr: "— A League of Their Own, sort of" },
+  { text: "You don't rise to the level of your intentions. You fall to the level of your departure time.", attr: "— Archilochus, transit edition" },
+  { text: "Every morning is a chance to be the person who makes the early one.", attr: "— daily reminder" },
+  { text: "The Bay doesn't grade on a curve.", attr: "— SF truism" },
+  { text: "If in doubt, bike it out.", attr: "— TI commuter handbook" },
+  { text: "There is no traffic on the extra mile. Or on the ferry.", attr: "— Roger Staubach, updated" },
+  { text: "Show up. The rest is logistics.", attr: "— anon" },
+  { text: "Dream big. But also leave the house.", attr: "— practical wisdom" },
+  { text: "The secret of getting ahead is getting to the dock.", attr: "— Mark Twain, if he commuted" },
+  { text: "Be stubborn about your goals, flexible about your route.", attr: "— common sense" },
+  { text: "Hard choices, easy commute. Easy choices, hard commute.", attr: "— Jerzy Gregorek, loosely" },
+];
+
+function setDailyQuote() {
+  const day = new Date();
+  const idx = (day.getFullYear() * 366 + day.getMonth() * 31 + day.getDate()) % QUOTES.length;
+  const q = QUOTES[idx];
+  document.getElementById('quoteText').textContent = `"${q.text}"`;
+  document.getElementById('quoteAttr').textContent = q.attr;
+}
+
+// ── TIME HELPERS ──────────────────────────────────────────────
+function t(s){s=s.trim().toLowerCase().replace(/\s/g,'');const pm=s.includes('pm');const c=s.replace('am','').replace('pm','');const[h,m]=c.split(':').map(Number);let hr=h;if(pm&&h!==12)hr+=12;if(!pm&&h===12)hr=0;return hr*60+(m||0);}
+function fmt(mins){const h24=((mins%1440)+1440)%1440,h=Math.floor(h24/60),m=h24%60,ap=h<12?'AM':'PM',h12=h===0?12:h>12?h-12:h;return`${h12}:${String(m).padStart(2,'0')} ${ap}`;}
+
+// ── SCHEDULES ─────────────────────────────────────────────────
+const FERRY_TI_SF={weekday:['7:30am','8:10am','8:45am','10:20am','11:30am','12:15pm','1:00pm','3:00pm','3:55pm','4:35pm','5:50pm','6:30pm','7:15pm','8:00pm'].map(t),saturday:['9:30am','10:15am','11:00am','12:00pm','12:15pm','12:45pm','1:30pm','2:20pm','3:30pm','3:45pm','4:15pm','5:00pm','6:15pm','7:00pm','7:45pm','8:30pm'].map(t),sunday:['9:30am','10:15am','11:00am','12:00pm','12:45pm','1:30pm','3:30pm','4:15pm','5:00pm','6:15pm','7:00pm','7:45pm','8:30pm'].map(t)};
+const FERRY_SF_TI={weekday:['7:50am','8:25am','9:05am','10:40am','11:50am','12:35pm','1:20pm','3:20pm','4:15pm','4:55pm','6:10pm','6:50pm','7:35pm','8:20pm'].map(t),saturday:['9:50am','10:35am','11:20am','11:45am','12:20pm','12:50pm','1:05pm','1:50pm','2:50pm','3:50pm','4:35pm','5:20pm','6:35pm','7:20pm','8:05pm','8:50pm'].map(t),sunday:['9:50am','10:35am','11:20am','12:20pm','12:50pm','1:05pm','1:50pm','3:50pm','4:35pm','5:20pm','6:35pm','7:20pm','8:05pm','8:50pm'].map(t)};
+const BUS_TI_SF={weekday:['6:19am','6:39am','6:59am','7:19am','7:39am','7:59am','8:19am','8:39am','8:59am','9:19am','9:39am','9:59am','10:19am','10:39am','10:59am','11:19am','11:39am','11:59am','12:20pm','12:40pm','1:00pm','1:20pm','1:40pm','2:00pm','2:20pm','2:40pm','3:00pm','3:20pm','3:40pm','4:00pm','4:20pm','4:40pm','5:00pm','5:20pm','5:40pm','6:00pm','6:20pm','6:40pm','7:00pm','7:19pm','7:39pm','7:59pm','8:19pm','8:39pm','8:59pm','9:19pm','9:39pm','9:59pm','10:19pm','10:39pm','10:59pm','11:19pm','11:46pm','12:11am','12:41am','1:11am','1:41am','2:11am','2:41am','3:11am','3:41am','4:11am','4:41am','5:11am','5:41am','6:11am'].map(t),saturday:['6:34am','7:04am','7:29am','7:54am','8:19am','8:44am','9:09am','9:34am','9:59am','10:24am','10:49am','11:14am','11:39am','12:04pm','12:29pm','12:54pm','1:19pm','1:44pm','2:09pm','2:34pm','2:59pm','3:24pm','3:49pm','4:15pm','4:40pm','5:05pm','5:30pm','5:55pm','6:20pm','6:45pm','7:10pm','7:35pm','8:00pm','8:25pm','8:50pm','9:15pm','9:40pm','10:05pm','10:30pm','10:55pm','11:20pm','11:47pm','12:12am','12:42am','1:12am','1:42am','2:12am','2:42am','3:12am','3:42am','4:12am','4:42am','5:12am','5:42am','6:12am'].map(t),sunday:['6:34am','7:04am','7:29am','7:54am','8:19am','8:44am','9:09am','9:34am','9:59am','10:24am','10:49am','11:14am','11:39am','12:04pm','12:29pm','12:54pm','1:19pm','1:44pm','2:09pm','2:34pm','2:59pm','3:24pm','3:49pm','4:15pm','4:40pm','5:05pm','5:30pm','5:55pm','6:20pm','6:45pm','7:10pm','7:35pm','8:00pm','8:25pm','8:50pm','9:15pm','9:40pm','10:05pm','10:30pm','10:55pm','11:20pm','11:47pm','12:12am','12:42am','1:12am','1:42am','2:12am','2:42am','3:12am','3:42am','4:12am','4:42am','5:12am','5:42am','6:12am'].map(t)};
+const BUS_SF_TI={weekday:['6:10am','6:30am','6:50am','7:10am','7:30am','7:50am','8:10am','8:30am','8:50am','9:10am','9:30am','9:50am','10:10am','10:30am','10:50am','11:10am','11:30am','11:50am','12:10pm','12:30pm','12:50pm','1:10pm','1:30pm','1:50pm','2:10pm','2:30pm','2:50pm','3:10pm','3:30pm','3:50pm','4:10pm','4:30pm','4:50pm','5:10pm','5:30pm','5:50pm','6:10pm','6:30pm','6:50pm','7:10pm','7:30pm','7:50pm','8:10pm','8:30pm','8:50pm','9:10pm','9:30pm','9:50pm','10:10pm','10:30pm','10:50pm','11:10pm','11:37pm','12:02am','12:32am','1:02am','1:32am','2:02am','2:32am','3:02am','3:32am','4:02am','4:32am','5:02am','5:32am','6:02am'].map(t),saturday:['6:25am','6:55am','7:20am','7:45am','8:10am','8:35am','9:00am','9:25am','9:50am','10:15am','10:40am','11:05am','11:30am','11:55am','12:20pm','12:45pm','1:10pm','1:35pm','2:00pm','2:25pm','2:50pm','3:15pm','3:40pm','4:05pm','4:30pm','4:55pm','5:20pm','5:45pm','6:10pm','6:35pm','7:00pm','7:25pm','7:50pm','8:15pm','8:40pm','9:05pm','9:30pm','9:55pm','10:20pm','10:45pm','11:10pm','11:37pm','12:02am','12:32am','1:02am','1:32am','2:02am','2:32am','3:02am','3:32am','4:02am','4:32am','5:02am','5:32am','6:02am'].map(t),sunday:['6:25am','6:55am','7:20am','7:45am','8:10am','8:35am','9:00am','9:25am','9:50am','10:15am','10:40am','11:05am','11:30am','11:55am','12:20pm','12:45pm','1:10pm','1:35pm','2:00pm','2:25pm','2:50pm','3:15pm','3:40pm','4:05pm','4:30pm','4:55pm','5:20pm','5:45pm','6:10pm','6:35pm','7:00pm','7:25pm','7:50pm','8:15pm','8:40pm','9:05pm','9:30pm','9:55pm','10:20pm','10:45pm','11:10pm','11:37pm','12:02am','12:32am','1:02am','1:32am','2:02am','2:32am','3:02am','3:32am','4:02am','4:32am','5:02am','5:32am','6:02am'].map(t)};
+
+// ── TERMINALS ─────────────────────────────────────────────────
+const TERMINALS = {
+  ti_ferry:   { lat:37.8240, lon:-122.3728, name:'TI Ferry Dock' },
+  ti_bus:     { lat:37.8227, lon:-122.3714, name:'Clipper Cove Way' },
+  sf_ferry:   { lat:37.7955, lon:-122.3937, name:'Ferry Building' },
+  sf_transit: { lat:37.7897, lon:-122.3972, name:'Transbay Transit Ctr' }
+};
+
+const WALK_SPEED = 83;  // m/min ~5 km/h
+const BIKE_SPEED = 300; // m/min ~18 km/h
+const BUFFER = 2;       // min buffer
+
+function haversine(a,b,c,d){const R=6371000,dL=(c-a)*Math.PI/180,dO=(d-b)*Math.PI/180,x=Math.sin(dL/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(dO/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+
+function getTravelInfo(terminalKey) {
+  if (userLat===null) return null;
+  const loc = TERMINALS[terminalKey];
+  const distM = Math.round(haversine(userLat, userLon, loc.lat, loc.lon));
+  const walkMins = distM / WALK_SPEED;
+  const bikeMins = distM / BIKE_SPEED;
+  return { distM, walkMins, bikeMins };
+}
+
+function catchLine(minsAway, tr) {
+  // Returns italic text describing catchability
+  if (!tr) return '';
+  const walkM = Math.round(tr.walkMins);
+  const bikeM = Math.round(tr.bikeMins) || 1;
+
+  if (minsAway >= tr.walkMins + BUFFER) {
+    return `~ ${walkM} min walk`;
+  } else if (minsAway >= tr.bikeMins + BUFFER) {
+    return `~ ${bikeM} min bike · walking won't cut it`;
+  } else if (minsAway >= tr.bikeMins - BUFFER) {
+    return `~ push it — ${bikeM} min if you bike now`;
+  } else {
+    return `gone — next one is ${walkM} min walk away`;
+  }
+}
+
+// ── STATE ─────────────────────────────────────────────────────
+let userLat=null, userLon=null, currentTab='smart', settingsOpen=false;
+
+function dayType(){const d=new Date().getDay();return d===0?'sunday':d===6?'saturday':'weekday';}
+function nowMins(){const n=new Date();return n.getHours()*60+n.getMinutes();}
+function adjTime(m){const now=nowMins();if(m<360&&now>18*60)return m+1440;return m;}
+
+function getInbound(limit=6){
+  const day=dayType(),now=nowMins(),deps=[];
+  FERRY_TI_SF[day].forEach(m=>deps.push({time:m,adj:adjTime(m),mode:'ferry',dest:'Ferry Building',terminal:'ti_ferry'}));
+  BUS_TI_SF[day].forEach(m=>deps.push({time:m,adj:adjTime(m),mode:'bus',dest:'Transbay Transit Ctr',terminal:'ti_bus'}));
+  return deps.filter(d=>d.adj>=now).sort((a,b)=>a.adj-b.adj).slice(0,limit);
+}
+function getOutbound(limit=6){
+  const day=dayType(),now=nowMins(),deps=[];
+  FERRY_SF_TI[day].forEach(m=>deps.push({time:m,adj:adjTime(m),mode:'ferry',dest:'Treasure Island',terminal:'sf_ferry'}));
+  BUS_SF_TI[day].forEach(m=>deps.push({time:m,adj:adjTime(m),mode:'bus',dest:'Treasure Island',terminal:'sf_transit'}));
+  return deps.filter(d=>d.adj>=now).sort((a,b)=>a.adj-b.adj).slice(0,limit);
+}
+
+// ── RENDER ────────────────────────────────────────────────────
+function renderDepCard(dep, now) {
+  const minsAway = dep.adj - now;
+  const isFerry = dep.mode==='ferry';
+  const tr = getTravelInfo(dep.terminal);
+  const cl = catchLine(minsAway, tr);
+
+  const distStr = tr ? `${tr.distM}m` : '';
+  const walkStr = tr ? `${Math.round(tr.walkMins)} min` : '—';
+  const bikeStr = tr ? `${Math.round(tr.bikeMins)||1} min` : '—';
+
+  // Walk status
+  function travelStatus(modeMins, minsAway) {
+    if (!tr) return '';
+    if (minsAway >= modeMins + BUFFER) return 'doable';
+    if (minsAway >= modeMins - BUFFER) return 'tight';
+    return 'too late';
+  }
+  const wSt = travelStatus(tr ? tr.walkMins : 999, minsAway);
+  const bSt = travelStatus(tr ? tr.bikeMins : 999, minsAway);
+
+  return `<div class="dep-card ${isFerry?'ferry':'bus'}-card">
+    <div class="dep-card-header">
+      <div class="dep-mode-row">
+        <div class="dep-mode-badge ${isFerry?'ferry':'bus'}-badge">${isFerry?'⛴  Ferry':'🚌  Bus 25'}</div>
+      </div>
+      <div class="dep-time-big">${fmt(dep.adj)}</div>
+      <div class="dep-dest">→ ${dep.dest}${distStr?' · '+distStr:''}</div>
+    </div>
+    <div class="dep-travel-row">
+      <div class="dep-travel-col">
+        <div class="dep-travel-icon">🚶</div>
+        <div class="dep-travel-mins">${tr?walkStr:'—'}</div>
+        <div class="dep-travel-status">${wSt==='doable'?'you\'re good':wSt==='tight'?'cutting it close':wSt==='too late'?'won\'t make it':''}</div>
+      </div>
+      <div class="dep-travel-col">
+        <div class="dep-travel-icon">🚴</div>
+        <div class="dep-travel-mins">${tr?bikeStr:'—'}</div>
+        <div class="dep-travel-status">${bSt==='doable'?'you\'re good':bSt==='tight'?'go now':bSt==='too late'?'won\'t make it':''}</div>
+      </div>
+      <div class="dep-travel-col" style="flex:1.4">
+        <div class="dep-travel-icon">🕐</div>
+        <div class="dep-travel-mins">${minsAway}m</div>
+        <div class="dep-travel-status" style="font-style:italic">${cl}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderUpcomingRow(dep, now, idx) {
+  const minsAway = dep.adj - now;
+  const isFerry = dep.mode==='ferry';
+  const tr = getTravelInfo(dep.terminal);
+  const cl = catchLine(minsAway, tr);
+  return `<div class="upcoming-row ${idx===0?'is-next':''}">
+    <div class="row-icon">${isFerry?'⛴':'🚌'}</div>
+    <div class="row-time ${isFerry?'ferry-time':'bus-time'}">${fmt(dep.adj)}</div>
+    <div class="row-middle">
+      <div class="row-dest">→ ${dep.dest}${tr?' · '+tr.distM+'m':''}</div>
+      ${cl?`<div class="row-catch">${cl}</div>`:''}
+    </div>
+    <div class="row-mins-chip">${minsAway}m</div>
+  </div>`;
+}
+
+function renderInbound(){
+  const now=nowMins(),deps=getInbound();
+  if(!deps.length) return`<div class="no-data">No more inbound service today</div>`;
+  let html=`<div style="height:4px"></div>${renderDepCard(deps[0],now)}`;
+  if(deps.length>1){
+    html+=`<div class="section-label">Also coming up</div><div class="upcoming-list">`;
+    html+=deps.slice(1).map((d,i)=>renderUpcomingRow(d,now,i+1)).join('');
+    html+=`</div>`;
+  }
+  return html;
+}
+
+function renderOutbound(){
+  const now=nowMins(),deps=getOutbound();
+  if(!deps.length) return`<div class="no-data">No more outbound service today</div>`;
+  let html=`<div style="height:4px"></div>${renderDepCard(deps[0],now)}`;
+  if(deps.length>1){
+    html+=`<div class="section-label">Also coming up</div><div class="upcoming-list">`;
+    html+=deps.slice(1).map((d,i)=>renderUpcomingRow(d,now,i+1)).join('');
+    html+=`</div>`;
+  }
+  return html;
+}
+
+function renderSmart(){
+  const now=nowMins();
+  const all=[
+    ...getInbound(10).map(d=>({...d,dir:'→ SF'})),
+    ...getOutbound(10).map(d=>({...d,dir:'→ Home'}))
+  ].sort((a,b)=>a.adj-b.adj).slice(0,5);
+
+  if(!all.length) return`<div class="no-data">No more departures today</div>`;
+
+  let html=`<div style="height:4px"></div><div class="smart-card"><div class="smart-card-label">Next departures · any direction</div>`;
+  all.forEach(dep=>{
+    const minsAway=dep.adj-now;
+    const isFerry=dep.mode==='ferry';
+    const tr=getTravelInfo(dep.terminal);
+    const cl=catchLine(minsAway,tr);
+    const mcls=minsAway<=5?'urgent':minsAway<=15?'soon':'';
+    html+=`<div class="smart-row">
+      <div class="smart-time ${isFerry?'ferry-time':'bus-time'}">${fmt(dep.adj)}</div>
+      <div class="smart-info">
+        <div class="smart-dest">${isFerry?'⛴':'🚌'} ${dep.dir}${tr?' · '+tr.distM+'m':''}</div>
+        ${cl?`<div class="smart-catch">${cl}</div>`:''}
+      </div>
+      <div class="smart-mins ${mcls}">${minsAway}m</div>
+    </div>`;
+  });
+  html+=`</div>`;
+  return html;
+}
+
+function updateUI(){
+  let html='';
+  if(currentTab==='inbound') html=renderInbound();
+  else if(currentTab==='outbound') html=renderOutbound();
+  else html=renderSmart();
+  document.getElementById('mainContent').innerHTML=html;
+}
+
+// ── TABS ──────────────────────────────────────────────────────
+function setTab(tab){
+  currentTab=tab;
+  ['smart','inbound','outbound'].forEach(id=>document.getElementById('tab-'+id).classList.toggle('active',id===tab));
+  updateUI();
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────
+function toggleSettings(){
+  settingsOpen=!settingsOpen;
+  document.getElementById('settingsPanel').classList.toggle('open',settingsOpen);
+  document.getElementById('settingsBtn').textContent=settingsOpen?'✕':'⚙';
+}
+function setTheme(t){
+  document.body.setAttribute('data-theme',t);
+  document.getElementById('themeLight').classList.toggle('active',t==='light');
+  document.getElementById('themeDark').classList.toggle('active',t==='dark');
+  document.getElementById('themeColorMeta').setAttribute('content',t==='dark'?'#0a0f1e':'#f5f4f0');
+  localStorage.setItem('ti-theme',t);
+}
+function setFont(f){
+  document.body.setAttribute('data-font',f);
+  document.querySelectorAll('.font-option').forEach(el=>el.classList.toggle('active',el.dataset.font===f));
+  localStorage.setItem('ti-font',f);
+}
+(function(){
+  setTheme(localStorage.getItem('ti-theme')||'light');
+  setFont(localStorage.getItem('ti-font')||'syne');
+})();
+
+// ── LOCATION ──────────────────────────────────────────────────
+function detectLocation(){
+  const txt=document.getElementById('locText');
+  txt.innerHTML='<span><span class="spinner"></span> Detecting…</span>';
+  if(!navigator.geolocation){showStatus('Location unavailable — travel times hidden.');updateUI();return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    userLat=pos.coords.latitude;userLon=pos.coords.longitude;
+    let best=null,bd=Infinity;
+    Object.values(TERMINALS).forEach(l=>{const d=haversine(userLat,userLon,l.lat,l.lon);if(d<bd){bd=d;best=l;}});
+    txt.innerHTML=`${best.name} <span>· ${Math.round(bd)<1000?Math.round(bd)+'m':(bd/1000).toFixed(1)+'km'}</span>`;
+    hideStatus();updateUI();
+  },()=>{
+    txt.innerHTML='<span>Location denied — travel times hidden</span>';
+    showStatus('Enable location access for walking & biking times.');
+    updateUI();
+  },{enableHighAccuracy:true,timeout:10000});
+}
+
+function showStatus(m){const e=document.getElementById('statusMsg');e.textContent=m;e.classList.add('visible');}
+function hideStatus(){document.getElementById('statusMsg').classList.remove('visible');}
+
+// ── CLOCK ─────────────────────────────────────────────────────
+function updateClock(){
+  const n=new Date(),h=n.getHours(),m=n.getMinutes(),s=n.getSeconds(),ap=h<12?'AM':'PM',h12=h===0?12:h>12?h-12:h;
+  document.getElementById('clockEl').textContent=`${h12}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ap}`;
+  document.getElementById('dayBadge').textContent=['SUN','MON','TUE','WED','THU','FRI','SAT'][n.getDay()];
+}
+
+setDailyQuote();
+updateClock();
+setInterval(()=>{updateClock();updateUI();},1000);
+window.addEventListener('load',()=>detectLocation());
+</script>
+</body>
+</html>
